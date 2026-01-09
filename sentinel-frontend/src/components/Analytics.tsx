@@ -27,7 +27,6 @@ const Analytics = () => {
   const [attackDistribution, setAttackDistribution] = useState<ChartData[]>([]);
   const [cvssHistogram, setCvssHistogram] = useState<ChartData[]>([]);
   const [timeline, setTimeline] = useState<ChartData[]>([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Update charts from context data
@@ -80,47 +79,7 @@ const Analytics = () => {
         count,
       }))
     );
-  }, [stats, flows]);        setStats(statsRes.data);
-        setAttackDistribution(
-          Object.entries(attackRes.data.distribution || {})
-            .map(([k, v]: [string, any]) => ({ name: k, value: typeof v === 'number' ? v : 0 }))
-            .sort((a, b) => (b.value || 0) - (a.value || 0))
-        );
-        setCvssHistogram(
-          Object.entries(cvssRes.data.histogram || {}).map(([k, v]: [string, any]) => ({ 
-            name: k, 
-            value: typeof v === 'number' ? v : 0 
-          }))
-        );
-        setTimeline(
-          Object.entries(timelineRes.data.timeline || {})
-            .slice(-12)
-            .map(([k, v]: [string, any]) => ({ time: k, count: typeof v === 'number' ? v : 0 }))
-        );
-        setLastUpdate(new Date());
-      } catch (error) {
-        console.error('Error fetching analytics:', error);
-        // Use default empty data on error
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnalytics();
-    const interval = setInterval(fetchAnalytics, 3000); // Real-time: every 3 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="analytics-container loading">
-        <div className="loading-spinner">
-          <h2>📊 Analytics Dashboard</h2>
-          <p>Loading real-time data...</p>
-        </div>
-      </div>
-    );
-  }
+  }, [stats, flows]);
 
   return (
     <div className="analytics-container">
@@ -128,7 +87,7 @@ const Analytics = () => {
         <h2>📊 Real-Time Analytics Dashboard</h2>
         <div className="update-indicator">
           <span className="live-dot"></span>
-          Last update: {lastUpdate?.toLocaleTimeString()}
+          Last update: {new Date().toLocaleTimeString()}
         </div>
       </div>
 
