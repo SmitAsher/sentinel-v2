@@ -1,59 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { FlowProvider } from './context/FlowContext';
 import GlobeComponent from './components/Globe';
 import Analytics from './components/Analytics';
 import DecryptedFlows from './components/DecryptedFlows';
 import './App.css';
 
-interface Flow {
-  src_ip: string;
-  dst_ip: string;
-  severity?: 'critical' | 'high' | 'medium' | 'low';
-  [key: string]: any;
-}
-
-function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState<string>('globe');
-  const [flows, setFlows] = useState<Flow[]>([]);
-
-  useEffect(() => {
-    // WebSocket connection with reconnect logic
-    let ws: WebSocket | null = null;
-    
-    const connectWebSocket = () => {
-      try {
-        ws = new WebSocket('ws://localhost:8000/ws');
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.type === 'flow' && data.payload) {
-              setFlows((prev) => [data.payload, ...prev].slice(0, 500));
-            }
-          } catch (e) {
-            console.error('Failed to parse message:', e);
-          }
-        };
-
-        ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          setTimeout(connectWebSocket, 3000); // Reconnect after 3s
-        };
-
-        ws.onclose = () => {
-          setTimeout(connectWebSocket, 3000); // Reconnect after 3s
-        };
-      } catch (error) {
-        console.error('Failed to create WebSocket:', error);
-        setTimeout(connectWebSocket, 3000);
-      }
-    };
-
-    connectWebSocket();
-
-    return () => {
-      if (ws) ws.close();
-    };
-  }, []);
 
   return (
     <div className="App">
@@ -83,7 +36,7 @@ function App() {
       </header>
 
       <main className="content">
-        {activeTab === 'globe' && <GlobeComponent flows={flows} />}
+        {activeTab === 'globe' && <GlobeComponent />}
         {activeTab === 'analytics' && <Analytics />}
         {activeTab === 'decrypted' && <DecryptedFlows />}
       </main>
@@ -91,5 +44,11 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <FlowProvider>
+      <AppContent />
+    </FlowProvider>
+  );
+}
 

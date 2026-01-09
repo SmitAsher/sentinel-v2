@@ -1,45 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useContext, useEffect } from 'react';
+import { FlowContext } from '../context/FlowContext';
 import '../styles/DecryptedFlows.css';
 
-interface DecryptedFlow {
-  flow_id: string;
-  src_ip: string;
-  dst_ip: string;
-  protocol: string;
-  host: string;
-  method: string;
-  path: string;
-  user_agent?: string;
-  request_body?: string;
-  attack_type: string;
-  severity: 'critical' | 'high' | 'medium' | 'low';
-  cvss_score: number;
-  timestamp: string;
-}
-
 const DecryptedFlows = () => {
-  const [flows, setFlows] = useState<DecryptedFlow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { flows } = useContext(FlowContext);
   const [filter, setFilter] = useState<'ALL' | 'HTTP' | 'HTTPS'>('ALL');
+  const [filteredFlows, setFilteredFlows] = useState(flows);
 
   useEffect(() => {
-    const fetchFlows = async () => {
-      try {
-        const protocol = filter === 'ALL' ? '' : `?protocol=${filter}`;
-        const response = await fetch(`http://localhost:8000/api/decrypted${protocol}`);
-        const data = await response.json();
-        setFlows(data.decrypted_flows || []);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching decrypted flows:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchFlows();
-    const interval = setInterval(fetchFlows, 2000); // Real-time refresh every 2s
-    return () => clearInterval(interval);
-  }, [filter]);
+    if (filter === 'ALL') {
+      setFilteredFlows(flows);
+    } else {
+      setFilteredFlows(flows.filter((f) => f.protocol === filter));
+    }
+  }, [flows, filter]);
 
   const getSeverityColor = (severity: string) => {
     const colors: Record<string, string> = {
@@ -51,12 +25,14 @@ const DecryptedFlows = () => {
     return colors[severity] || '#6699ff';
   };
 
-  if (loading) return <div className="decrypted-flows loading">Loading decrypted flows...</div>;
+  if (!flows || flows.length === 0) {
+    return <div className="decrypted-flows loading">Waiting for flows...</div>;
+  }
 
   return (
     <div className="decrypted-flows">
       <div className="df-header">
-        <h2>🔐 Decrypted HTTP/HTTPS Flows</h2>
+        <h2>🔐 Decrypted HTTP/HTTPS Flows ({filteredFlows.length})</h2>
         <div className="df-filters">
           {(['ALL', 'HTTP', 'HTTPS'] as const).map((proto) => (
             <button
@@ -85,7 +61,7 @@ const DecryptedFlows = () => {
             </tr>
           </thead>
           <tbody>
-            {flows.map((flow) => (
+            {filteredFlows.slice(0, 50).map((flow) => (
               <tr key={flow.flow_id} className={`severity-${flow.severity}`}>
                 <td className="time">
                   {new Date(flow.timestamp).toLocaleTimeString()}
@@ -123,7 +99,7 @@ const DecryptedFlows = () => {
             ))}
           </tbody>
         </table>
-        {flows.length === 0 && (
+        {filteredFlows.length === 0 && (
           <div className="no-flows">No flows detected</div>
         )}
       </div>

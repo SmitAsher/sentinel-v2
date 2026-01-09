@@ -5,11 +5,120 @@ from fastapi.responses import JSONResponse
 import json
 import asyncio
 import logging
+import random
+import uuid
 from typing import List, Dict
 from datetime import datetime, timedelta
 from collections import deque
 
 logger = logging.getLogger(__name__)
+
+# Real websites and vulnerability data
+REAL_WEBSITES = [
+    {"host": "www.facebook.com", "ip": "31.13.64.35"},
+    {"host": "www.google.com", "ip": "142.251.41.14"},
+    {"host": "www.youtube.com", "ip": "142.251.32.142"},
+    {"host": "www.amazon.com", "ip": "54.239.28.30"},
+    {"host": "www.twitter.com", "ip": "104.244.42.65"},
+    {"host": "www.linkedin.com", "ip": "13.107.42.14"},
+    {"host": "www.instagram.com", "ip": "31.13.64.35"},
+    {"host": "www.github.com", "ip": "140.82.113.4"},
+    {"host": "www.stackoverflow.com", "ip": "151.101.1.140"},
+    {"host": "www.reddit.com", "ip": "151.101.1.140"},
+    {"host": "api.stripe.com", "ip": "54.192.1.1"},
+    {"host": "api.openai.com", "ip": "104.18.21.212"},
+    {"host": "www.paypal.com", "ip": "173.0.82.249"},
+    {"host": "www.microsoft.com", "ip": "13.107.42.14"},
+    {"host": "www.apple.com", "ip": "17.172.224.47"},
+    {"host": "api.slack.com", "ip": "52.89.214.238"},
+    {"host": "www.netflix.com", "ip": "52.84.171.131"},
+    {"host": "www.dropbox.com", "ip": "162.125.18.133"},
+    {"host": "www.uber.com", "ip": "104.18.47.108"},
+    {"host": "www.airbnb.com", "ip": "104.18.47.108"},
+]
+
+VULNERABILITIES = [
+    {"type": "SQL_INJECTION", "severity": "critical", "cvss": 9.8, "method": "POST"},
+    {"type": "XSS_INJECTION", "severity": "high", "cvss": 7.2, "method": "GET"},
+    {"type": "CSRF_ATTACK", "severity": "high", "cvss": 8.1, "method": "POST"},
+    {"type": "RCE", "severity": "critical", "cvss": 9.9, "method": "POST"},
+    {"type": "LFI", "severity": "high", "cvss": 7.5, "method": "GET"},
+    {"type": "AUTHENTICATION_BYPASS", "severity": "critical", "cvss": 9.1, "method": "POST"},
+    {"type": "INFORMATION_DISCLOSURE", "severity": "medium", "cvss": 5.3, "method": "GET"},
+    {"type": "PRIVILEGE_ESCALATION", "severity": "critical", "cvss": 9.0, "method": "POST"},
+    {"type": "DIRECTORY_TRAVERSAL", "severity": "high", "cvss": 7.0, "method": "GET"},
+    {"type": "INSECURE_DESERIALIZATION", "severity": "critical", "cvss": 8.9, "method": "POST"},
+    {"type": "CREDENTIAL_STUFFING", "severity": "high", "cvss": 8.1, "method": "POST"},
+    {"type": "BRUTE_FORCE", "severity": "high", "cvss": 7.3, "method": "POST"},
+    {"type": "DDOS", "severity": "high", "cvss": 7.5, "method": "GET"},
+    {"type": "MALWARE_INJECTION", "severity": "critical", "cvss": 9.6, "method": "GET"},
+    {"type": "PATH_TRAVERSAL", "severity": "high", "cvss": 7.4, "method": "GET"},
+    {"type": "COMMAND_INJECTION", "severity": "critical", "cvss": 9.8, "method": "POST"},
+    {"type": "NORMAL", "severity": "low", "cvss": 0.0, "method": "GET"},
+]
+
+ENDPOINTS = [
+    "/api/login",
+    "/api/users",
+    "/api/auth",
+    "/admin/panel",
+    "/search",
+    "/upload",
+    "/download",
+    "/settings",
+    "/profile",
+    "/api/v1/data",
+    "/graphql",
+    "/webhook",
+    "/callback",
+    "/redirect",
+    "/cmd",
+    "/shell",
+    "/eval",
+]
+
+# Shared state
+flows_db = {}
+alerts_db = deque(maxlen=1000)
+stats_db = {
+    "total_flows": 0,
+    "total_alerts": 0,
+    "attack_counts": {},
+    "severity_distribution": {"critical": 0, "high": 0, "medium": 0, "low": 0},
+}
+active_ws_connections: List[WebSocket] = []
+
+
+def generate_continuous_flow():
+    """Generate a single random flow with real website data."""
+    website = random.choice(REAL_WEBSITES)
+    vuln = random.choice(VULNERABILITIES)
+    src_ip = f"192.168.{random.randint(1, 254)}.{random.randint(1, 254)}"
+    src_port = random.randint(40000, 65535)
+    
+    flow_id = f"flow_{uuid.uuid4().hex[:8]}"
+    protocol = "HTTPS" if random.random() > 0.2 else "HTTP"
+    
+    flow = {
+        "flow_id": flow_id,
+        "src_ip": src_ip,
+        "dst_ip": website["ip"],
+        "src_port": src_port,
+        "dst_port": 443 if protocol == "HTTPS" else 80,
+        "protocol": protocol,
+        "status": "decrypted",
+        "host": website["host"],
+        "method": vuln["method"],
+        "path": random.choice(ENDPOINTS) + (f"?id={random.randint(1, 1000)}" if random.random() > 0.5 else ""),
+        "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+        "request_body": '{"username":"attacker","password":"password123"}' if vuln["method"] == "POST" else "",
+        "attack_type": vuln["type"],
+        "severity": vuln["severity"],
+        "cvss_score": vuln["cvss"],
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    
+    return flow
 
 # Shared state (in production, use proper database)
 flows_db = {}
@@ -299,7 +408,7 @@ def create_app():
         await websocket.accept()
         active_ws_connections.append(websocket)
         
-        # Send initial data
+        # Send initial stats
         await websocket.send_json({
             "type": "stats",
             "payload": stats_db
@@ -307,18 +416,65 @@ def create_app():
         
         try:
             while True:
-                # Keep connection alive
-                await asyncio.sleep(1)
+                # Keep connection alive - receive any messages
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=1.0)
+        except asyncio.TimeoutError:
+            # Timeout is expected, just keep the connection alive
+            pass
         except:
             if websocket in active_ws_connections:
                 active_ws_connections.remove(websocket)
     
-    # Internal functions to update state
-    
     async def broadcast_flow(flow: Dict):
-        """Broadcast new flow to connected clients."""
-        flow_id = f"{flow.get('src_ip')}:{flow.get('src_port')}-{flow.get('dst_ip')}:{flow.get('dst_port')}"
+        """Broadcast new flow to connected clients and update stats."""
+        flow_id = flow.get("flow_id")
         flows_db[flow_id] = flow
+        
+        # Update stats
+        severity = flow.get("severity", "low")
+        stats_db["severity_distribution"][severity] = stats_db["severity_distribution"].get(severity, 0) + 1
+        attack_type = flow.get("attack_type", "NORMAL")
+        stats_db["attack_counts"][attack_type] = stats_db["attack_counts"].get(attack_type, 0) + 1
+        stats_db["total_flows"] = len(flows_db)
+        
+        # Keep only last 500 flows
+        if len(flows_db) > 500:
+            oldest_flow = min(flows_db.items(), key=lambda x: x[1].get("timestamp", ""))[0]
+            del flows_db[oldest_flow]
+        
+        # Broadcast to all connected clients
+        for connection in active_ws_connections:
+            try:
+                await connection.send_json({
+                    "type": "flow",
+                    "payload": flow
+                })
+                await connection.send_json({
+                    "type": "stats",
+                    "payload": stats_db
+                })
+            except:
+                pass
+    
+    async def continuous_flow_generator():
+        """Continuously generate flows and broadcast them."""
+        while True:
+            try:
+                # Generate flow every 0.5-2 seconds
+                await asyncio.sleep(random.uniform(0.5, 2))
+                flow = generate_continuous_flow()
+                await broadcast_flow(flow)
+            except Exception as e:
+                logger.error(f"Error generating flow: {e}")
+                await asyncio.sleep(1)
+    
+    @app.on_event("startup")
+    async def startup_event():
+        """Start background flow generation on app startup."""
+        asyncio.create_task(continuous_flow_generator())
+        logger.info("Started continuous flow generator")
+    
+    # Internal functions to update state
         stats_db["total_flows"] += 1
         
         for connection in active_ws_connections:

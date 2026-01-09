@@ -1,18 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import axios from 'axios';
+import { FlowContext } from '../context/FlowContext';
 import '../styles/Analytics.css';
-
-interface Stats {
-  total_flows?: number;
-  total_alerts?: number;
-  severity_distribution?: Record<string, number>;
-  attack_counts?: Record<string, number>;
-  [key: string]: any;
-}
 
 interface ChartData {
   name?: string;
@@ -31,24 +23,64 @@ const COLORS = {
 };
 
 const Analytics = () => {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const { stats, flows } = useContext(FlowContext);
   const [attackDistribution, setAttackDistribution] = useState<ChartData[]>([]);
   const [cvssHistogram, setCvssHistogram] = useState<ChartData[]>([]);
   const [timeline, setTimeline] = useState<ChartData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const [statsRes, attackRes, cvssRes, timelineRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/analytics/stats'),
-          axios.get('http://localhost:8000/api/analytics/attack-distribution'),
-          axios.get('http://localhost:8000/api/analytics/cvss-histogram'),
-          axios.get('http://localhost:8000/api/analytics/timeline'),
-        ]);
+    // Update charts from context data
+    if (!stats) return;
 
-        setStats(statsRes.data);
+    // Attack distribution
+    const attackDist = Object.entries(stats.attack_counts || {}).map(([type, count]) => ({
+      name: type,
+      value: count as number,
+    }));
+    setAttackDistribution(attackDist);
+
+    // CVSS histogram (from flows)
+    const cvssData = {
+      '0.0-3.9': 0,
+      '4.0-6.9': 0,
+      '7.0-8.9': 0,
+      '9.0-10.0': 0,
+    };
+    flows.forEach((flow) => {
+      const cvss = flow.cvss_score || 0;
+      if (cvss < 4.0) cvssData['0.0-3.9']++;
+      else if (cvss < 7.0) cvssData['4.0-6.9']++;
+      else if (cvss < 9.0) cvssData['7.0-8.9']++;
+      else cvssData['9.0-10.0']++;
+    });
+    setCvssHistogram(
+      Object.entries(cvssData).map(([range, count]) => ({
+        name: range,
+        value: count,
+      }))
+    );
+
+    // Timeline
+    const now = new Date();
+    const timelineData: Record<string, number> = {};
+    for (let i = 0; i < 12; i++) {
+      const time = new Date(now.getTime() - i * 5 * 60000);
+      const key = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      timelineData[key] = 0;
+    }
+    flows.forEach((flow) => {
+      const time = new Date(flow.timestamp);
+      const key = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      if (key in timelineData) timelineData[key]++;
+    });
+    setTimeline(
+      Object.entries(timelineData).reverse().map(([time, count]) => ({
+        time,
+        count,
+      }))
+    );
+  }, [stats, flows]);        setStats(statsRes.data);
         setAttackDistribution(
           Object.entries(attackRes.data.distribution || {})
             .map(([k, v]: [string, any]) => ({ name: k, value: typeof v === 'number' ? v : 0 }))

@@ -1,14 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useContext } from 'react';
 import * as THREE from 'three';
+import { FlowContext } from '../context/FlowContext';
 
-interface Flow {
-  src_ip: string;
-  dst_ip: string;
-  severity?: 'critical' | 'high' | 'medium' | 'low';
-  [key: string]: any;
-}
-
-const GlobeComponent = ({ flows }: { flows: Flow[] }) => {
+const GlobeComponent = () => {
+  const { flows } = useContext(FlowContext);
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -146,17 +141,12 @@ const GlobeComponent = ({ flows }: { flows: Flow[] }) => {
 
     animate();
 
-    // Add flows periodically if available
+    // Add incoming flows as particles
     if (flows && flows.length > 0) {
-      flows.slice(0, 5).forEach((flow) => {
+      flows.slice(0, 10).forEach((flow) => {
         createFlowParticle(flow.src_ip, flow.dst_ip, flow.severity || 'medium');
       });
     }
-    
-    // Create demo particles for visual
-    const demoInterval = setInterval(() => {
-      createFlowParticle('192.168.1.1', '8.8.8.8', ['critical', 'high', 'medium', 'low'][Math.floor(Math.random() * 4)]);
-    }, 800);
 
     sceneRef.current = scene;
     rendererRef.current = renderer;
@@ -177,7 +167,6 @@ const GlobeComponent = ({ flows }: { flows: Flow[] }) => {
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      clearInterval(demoInterval);
       if (container && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
