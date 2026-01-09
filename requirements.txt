@@ -1,0 +1,27 @@
+# Backend
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+sqlalchemy
+pydantic-settings
+
+# Packet capture & networking
+scapy>=2.5.0
+dpkt
+
+# TLS/Crypto
+cryptography>=41.0.0
+pyopenssl
+
+# Database (optional)
+sqlite3
+
+# Async & concurrency
+aiofiles
+websockets
+
+# Utilities
+python-dotenv
+requests
+
