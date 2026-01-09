@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import GlobeComponent from './components/Globe';
 import Analytics from './components/Analytics';
+import DecryptedFlows from './components/DecryptedFlows';
 import './App.css';
 
 interface Flow {
@@ -57,13 +58,14 @@ function App() {
   return (
     <div className="App">
       <header className="header">
-        <h1>⚔️ SENTINEL v2.0 — Network Threat Intelligence</h1>
+        <h1>⚔️ SENTINEL v2.0</h1>
+        <p className="subtitle">Network Threat Intelligence & TLS Decryption</p>
         <div className="nav-tabs">
           <button
             className={activeTab === 'globe' ? 'tab active' : 'tab'}
             onClick={() => setActiveTab('globe')}
           >
-            🌍 Globe
+            🌍 Globe View
           </button>
           <button
             className={activeTab === 'analytics' ? 'tab active' : 'tab'}
@@ -71,15 +73,23 @@ function App() {
           >
             📊 Analytics
           </button>
+          <button
+            className={activeTab === 'decrypted' ? 'tab active' : 'tab'}
+            onClick={() => setActiveTab('decrypted')}
+          >
+            🔐 Decrypted Flows
+          </button>
         </div>
       </header>
 
       <main className="content">
         {activeTab === 'globe' && <GlobeComponent flows={flows} />}
         {activeTab === 'analytics' && <Analytics />}
+        {activeTab === 'decrypted' && <DecryptedFlows />}
       </main>
     </div>
   );
 }
 
 export default App;
+

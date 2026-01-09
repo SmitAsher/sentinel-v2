@@ -14,9 +14,6 @@ dpkt
 cryptography>=41.0.0
 pyopenssl
 
-# Database (optional)
-sqlite3
-
 # Async & concurrency
 aiofiles
 websockets

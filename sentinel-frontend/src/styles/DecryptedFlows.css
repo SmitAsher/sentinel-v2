@@ -1,0 +1,262 @@
+.decrypted-flows {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+  color: #e0e0e0;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+}
+
+.df-header {
+  padding: 20px;
+  border-bottom: 2px solid #00d4ff;
+  background: rgba(0, 20, 40, 0.5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.df-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #00d4ff;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+.df-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: 1px solid #00d4ff;
+  background: transparent;
+  color: #00d4ff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+  background: rgba(0, 212, 255, 0.1);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+.filter-btn.active {
+  background: #00d4ff;
+  color: #0a0e27;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+}
+
+.df-table-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  background: rgba(10, 14, 39, 0.3);
+}
+
+.df-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.df-table thead {
+  position: sticky;
+  top: 0;
+  background: rgba(0, 20, 40, 0.8);
+  z-index: 10;
+}
+
+.df-table th {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 2px solid #00d4ff;
+  color: #00d4ff;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.df-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.df-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.df-table tbody tr:hover {
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.df-table tr.severity-critical {
+  border-left: 4px solid #ff3232;
+}
+
+.df-table tr.severity-high {
+  border-left: 4px solid #ffc800;
+}
+
+.df-table tr.severity-medium {
+  border-left: 4px solid #ffeb3b;
+}
+
+.df-table tr.severity-low {
+  border-left: 4px solid #00ff64;
+}
+
+.time {
+  color: #90caf9;
+  font-weight: bold;
+  width: 100px;
+}
+
+.protocol {
+  width: 80px;
+}
+
+.proto-badge {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+.proto-badge.http {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ffb74d;
+  border: 1px solid #ffb74d;
+}
+
+.proto-badge.https {
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+  border: 1px solid #81c784;
+}
+
+.host {
+  color: #ce93d8;
+  font-weight: bold;
+}
+
+.method {
+  width: 70px;
+}
+
+.method-badge {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-weight: bold;
+  font-size: 0.75rem;
+  background: rgba(100, 150, 255, 0.2);
+  color: #64b5f6;
+  border: 1px solid #64b5f6;
+}
+
+.method-badge.post {
+  background: rgba(255, 87, 34, 0.2);
+  color: #ff7043;
+  border: 1px solid #ff7043;
+}
+
+.method-badge.get {
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+  border: 1px solid #81c784;
+}
+
+.path {
+  color: #a5d6a7;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attack {
+  color: #f48fb1;
+  font-weight: bold;
+}
+
+.severity {
+  width: 100px;
+}
+
+.severity-badge {
+  font-weight: bold;
+  text-shadow: 0 0 8px currentColor;
+}
+
+.cvss {
+  width: 70px;
+  text-align: center;
+}
+
+.cvss-score {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.cvss-0 {
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+}
+
+.cvss-1 {
+  background: rgba(255, 235, 59, 0.2);
+  color: #ffeb3b;
+}
+
+.cvss-2 {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.cvss-3 {
+  background: rgba(255, 87, 34, 0.2);
+  color: #ff7043;
+}
+
+.no-flows {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #888;
+  font-size: 1.1rem;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #00d4ff;
+  font-size: 1.2rem;
+}
+
+/* Scrollbar styling */
+.df-table-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.df-table-container::-webkit-scrollbar-track {
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.df-table-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.3);
+  border-radius: 4px;
+}
+
+.df-table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.5);
+}
