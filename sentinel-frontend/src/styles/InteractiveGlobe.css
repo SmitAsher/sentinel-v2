@@ -1,0 +1,50 @@
+.interactive-globe-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.interactive-globe-container {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.interactive-globe-container:active {
+  cursor: grabbing;
+}
+
+.office-tooltip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -120px);
+  background: rgba(11, 12, 16, 0.9);
+  border: 1px solid #00d4ff;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+.organization-watermark {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: rgba(255, 255, 255, 0.06);
+  font-weight: 900;
+  text-transform: uppercase;
+  z-index: 1;
+  pointer-events: none;
+}

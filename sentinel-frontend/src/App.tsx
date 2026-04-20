@@ -1,45 +1,33 @@
-import { useState } from 'react';
-import { FlowProvider } from './context/FlowContext';
-import GlobeComponent from './components/Globe';
-import Analytics from './components/Analytics';
-import DecryptedFlows from './components/DecryptedFlows';
-import './App.css';
+import React, { useState, useContext } from 'react';
+import { FlowProvider, FlowContext } from './context/FlowContext';
+import Login from './components/Login';
+import Map2D from './components/Map2D';
+import ThreatMapLayout from './components/ThreatMapLayout';
+import { useTabAlerts } from './hooks/useTabAlerts';
 
-function AppContent() {
-  const [activeTab, setActiveTab] = useState<string>('globe');
+// To remove the old styles cleanly and rely on the new ones
+import './styles/Login.css';
+import './styles/Map2D.css';
+import './styles/ThreatMapLayout.css';
+
+function MainApp() {
+  const [organization, setOrganization] = useState<string>('');
+  const { stats } = useContext(FlowContext);
+
+  // Hook handles browser tab modifications
+  useTabAlerts(stats.total_alerts || 0, organization);
+
+  if (!organization) {
+    return <Login onLogin={setOrganization} />;
+  }
 
   return (
-    <div className="App">
-      <header className="header">
-        <h1>⚔️ SENTINEL v2.0</h1>
-        <p className="subtitle">Network Threat Intelligence & TLS Decryption</p>
-        <div className="nav-tabs">
-          <button
-            className={activeTab === 'globe' ? 'tab active' : 'tab'}
-            onClick={() => setActiveTab('globe')}
-          >
-            🌍 Globe View
-          </button>
-          <button
-            className={activeTab === 'analytics' ? 'tab active' : 'tab'}
-            onClick={() => setActiveTab('analytics')}
-          >
-            📊 Analytics
-          </button>
-          <button
-            className={activeTab === 'decrypted' ? 'tab active' : 'tab'}
-            onClick={() => setActiveTab('decrypted')}
-          >
-            🔐 Decrypted Flows
-          </button>
-        </div>
-      </header>
-
-      <main className="content">
-        {activeTab === 'globe' && <GlobeComponent />}
-        {activeTab === 'analytics' && <Analytics />}
-        {activeTab === 'decrypted' && <DecryptedFlows />}
-      </main>
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#0b0c10' }}>
+      {/* Background Interactive 2D Map */}
+      <Map2D organization={organization} />
+      
+      {/* Enterprise Analytics Overlay */}
+      <ThreatMapLayout organization={organization} onLogout={() => setOrganization('')} />
     </div>
   );
 }
@@ -47,7 +35,7 @@ function AppContent() {
 export default function App() {
   return (
     <FlowProvider>
-      <AppContent />
+      <MainApp />
     </FlowProvider>
   );
 }
